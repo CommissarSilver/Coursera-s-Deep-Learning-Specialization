@@ -46,3 +46,30 @@ def conv_forward(A_prev, W, b, hyper_parameters):
 
     cache = (A_prev, W, b, hyper_parameters)
     return Z, cache
+
+
+def pool_forward(A_prev, hyper_parameters, mode='max'):
+    (m, n_H_prev, n_W_prev, n_C_prev) = A_prev.shape
+    f = hyper_parameters['f']
+    stride = hyper_parameters['stride']
+    n_H = int(1 + (n_H_prev - f) / stride)
+    n_W = int(1 + (n_W_prev - f) / stride)
+    n_C = n_C_prev
+    A = np.zeros((m, n_H, n_W, n_C))
+    for i in range(m):
+        for h in range(n_H):
+            vert_start = h
+            vert_end = h + n_H
+            for w in range(n_W):
+                horiz_start = w
+                horiz_end = w + n_W
+                for c in range(n_C):
+                    a_prev_slice = A_prev[vert_start:vert_end, horiz_start:horiz_end, c, :]
+
+                    if mode == 'max':
+                        A[i, h, w, c] = np.max(a_prev_slice)
+                    elif mode == 'avg':
+                        A[i, h, w, c] = np.mean(a_prev_slice)
+
+    cache = (A_prev, hyper_parameters)
+    return A, cache
