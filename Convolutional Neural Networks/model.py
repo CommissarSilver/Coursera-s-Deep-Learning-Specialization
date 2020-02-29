@@ -25,3 +25,24 @@ def conv_forward(A_prev, W, b, hyper_parameters):
     n_W = int(np.floor(((n_W_prev - f) + 2 * pad) / stride)) + 1
 
     Z = np.zeros((n_H, n_W))
+
+    A_prev_pad = zero_pad(A_prev, pad)
+
+    for i in range(m):
+        a_prev_pad = A_prev_pad[i]
+        for h in range(n_H):
+            vert_start = h
+            vert_end = h + n_H
+
+            for w in range(n_W):
+                horiz_start = w
+                horiz_end = w + n_W
+
+                for c in range(n_C):
+                    a_slice_prev = a_prev_pad[vert_start:vert_end, horiz_start:horiz_end, :]
+                    weights = W[vert_start:vert_end, horiz_start:horiz_end, c, :]
+                    biases = b[vert_start:vert_end, horiz_start:horiz_end, c, :]
+                    Z[i, h, w, c] = a_slice_prev * weights + biases
+
+    cache = (A_prev, W, b, hyper_parameters)
+    return Z, cache
