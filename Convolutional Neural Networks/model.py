@@ -119,3 +119,31 @@ def distribute_value(dZ, shape):
     average = dZ / (n_H * n_W)
     a = np.ones(shape) * average
     return a
+
+
+def pool_backward(dA, cache, mode='max'):
+    (A_prev, hyper_parameters) = cache
+    stride = hyper_parameters["stride"]
+    f = hyper_parameters["f"]
+    m, n_H_prev, n_W_prev, n_C_prev = A_prev.shape
+    m, n_H, n_W, n_C = dA.shape
+    dA_prev = np.zeros(A_prev.shape)
+
+    for i in range(m):
+        a_prev = A_prev[i]
+        for h in range(n_H):
+            for w in range(n_W):
+                for c in range(n_C):
+                    vert_start = h
+                    vert_end = vert_start + f
+                    horiz_start = w
+                    horiz_end = horiz_start + f
+                    if mode == "max":
+                        a_prev_slice = a_prev[vert_start:vert_end, horiz_start:horiz_end, c]
+                        mask = create_mask_from_window(a_prev_slice)
+                        dA_prev[i, vert_start:vert_end, horiz_start:horiz_end, c] += np.multiply(mask, dA[i, h, w, c])
+                    elif mode == 'average':
+                        da = dA[i, h, w, c]
+                        shape = (f, f)
+                        dA_prev[i, vert_start:vert_end, horiz_start:horiz_end, c] += distribute_value(da, shape)
+    return dA_prev
