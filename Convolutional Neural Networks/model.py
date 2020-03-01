@@ -5,6 +5,7 @@ import matplotlib.pyplot as plt
 
 def zero_pad(X, pad):
     X_pad = np.pad(X, ((0, 0), (pad, pad), (pad, pad), (0, 0)), mode='constant', constant_values=0)
+
     return X_pad
 
 
@@ -12,6 +13,7 @@ def conv_single_step(a_slice_prev, W, b):
     s = a_slice_prev * W
     Z = np.sum(s)
     Z = Z + float(b)
+
     return Z
 
 
@@ -42,7 +44,7 @@ def conv_forward(A_prev, W, b, hyper_parameters):
                     a_slice_prev = a_prev_pad[vert_start:vert_end, horiz_start:horiz_end, :]
                     weights = W[vert_start:vert_end, horiz_start:horiz_end, c, :]
                     biases = b[vert_start:vert_end, horiz_start:horiz_end, c, :]
-                    Z[i, h, w, c] = a_slice_prev * weights + biases
+                    Z[i, h, w, c] = conv_single_step(a_slice_prev, weights, biases)
 
     cache = (A_prev, W, b, hyper_parameters)
     return Z, cache
@@ -58,17 +60,16 @@ def pool_forward(A_prev, hyper_parameters, mode='max'):
     A = np.zeros((m, n_H, n_W, n_C))
     for i in range(m):
         for h in range(n_H):
-            vert_start = h
-            vert_end = h + n_H
             for w in range(n_W):
-                horiz_start = w
-                horiz_end = w + n_W
                 for c in range(n_C):
-                    a_prev_slice = A_prev[vert_start:vert_end, horiz_start:horiz_end, c, :]
-
-                    if mode == 'max':
+                    vert_start = h * stride
+                    vert_end = vert_start + f
+                    horiz_start = w * stride
+                    horiz_end = horiz_start + f
+                    a_prev_slice = A_prev[i, vert_start:vert_end, horiz_start:horiz_end, c]
+                    if mode == "max":
                         A[i, h, w, c] = np.max(a_prev_slice)
-                    elif mode == 'avg':
+                    elif mode == "average":
                         A[i, h, w, c] = np.mean(a_prev_slice)
 
     cache = (A_prev, hyper_parameters)
