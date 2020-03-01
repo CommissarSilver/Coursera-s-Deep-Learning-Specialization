@@ -75,8 +75,9 @@ def pool_forward(A_prev, hyper_parameters, mode='max'):
     cache = (A_prev, hyper_parameters)
     return A, cache
 
-def conv_backward(dZ,cache):
-    (A_prev,W,b,hyper_parameters)=cache
+
+def conv_backward(dZ, cache):
+    (A_prev, W, b, hyper_parameters) = cache
     (m, n_H_prev, n_W_prev, n_C_prev) = A_prev.shape
     (f, f, n_C_prev, n_C) = W.shape
     stride = hyper_parameters["stride"]
@@ -107,3 +108,14 @@ def conv_backward(dZ,cache):
                     db[:, :, :, c] += dZ[i, h, w, c]
         dA_prev[i, :, :, :] = da_prev_pad[pad:-pad, pad:-pad, :]
     return dA_prev, dW, db
+
+
+def create_mask_from_window(x):
+    return x == np.max(x)
+
+
+def distribute_value(dZ, shape):
+    (n_H, n_W) = shape
+    average = dZ / (n_H * n_W)
+    a = np.ones(shape) * average
+    return a
